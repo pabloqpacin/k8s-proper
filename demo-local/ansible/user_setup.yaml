@@ -2,40 +2,40 @@
 - name: clone dotfiles
   ansible.builtin.git:
     repo: 'https://github.com/pabloqpacin/dotfiles.git'
-    dest: ~/dotfiles
+    dest: /root/dotfiles
 
 - name: rename old .vimrc and create symlink
   ansible.builtin.shell: |
-    if [ ! -L ~/.vimrc ]; then
-      mv ~/.vimrc{,.bak}
-      ln -s ~/dotfiles/.vimrc ~/.vimrc
+    if [ ! -L /root/.vimrc ]; then
+      mv /root/.vimrc{,.bak}
+      ln -s /root/dotfiles/.vimrc /root/.vimrc
     fi
   args:
     executable: /bin/bash
 
 - name: ensure .config directory exists
   ansible.builtin.file:
-    path: ~/.config
+    path: /root/.config
     state: directory
     mode: '0755'
 
 - name: symlink bat
   ansible.builtin.file:
-    src: ~/dotfiles/.config/bat
-    dest: ~/.config/bat
+    src: /root/dotfiles/.config/bat
+    dest: /root/.config/bat
     state: link
     force: no
 
 - name: symlink tmux
   ansible.builtin.file:
-    src: ~/dotfiles/.config/tmux
-    dest: ~/.config/tmux
+    src: /root/dotfiles/.config/tmux
+    dest: /root/.config/tmux
     state: link
     force: no
 
 - name: Download and install Oh My Zsh
   ansible.builtin.shell: |
-    if [ ! -d ~/.oh-my-zsh ]; then
+    if [ ! -d /root/.oh-my-zsh ]; then
       yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     fi
   args:
@@ -47,14 +47,14 @@
 
 - name: Backup existing .zshrc if it exists
   ansible.builtin.shell: |
-    if [ ! -L ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.bak; fi
+    if [ ! -L /root/.zshrc ]; then mv /root/.zshrc /root/.zshrc.bak; fi
   args:
     executable: /bin/bash
 
 - name: Create symlink for .zshrc
   ansible.builtin.file:
-    src: ~/dotfiles/.zshrc
-    dest: ~/.zshrc
+    src: /root/dotfiles/.zshrc
+    dest: /root/.zshrc
     state: link
 
 - name: Execute setup scripts
@@ -66,11 +66,11 @@
     executable: /bin/bash
   vars:
     scripts:
-      - ~/dotfiles/zsh/plugins/clone-em.sh
-      - ~/dotfiles/scripts/setup/omz-msg_random_theme.sh
+      - /root/dotfiles/zsh/plugins/clone-em.sh
+      - /root/dotfiles/scripts/setup/omz-msg_random_theme.sh
 
 - name: Ensure zsh is the default shell
   ansible.builtin.user:
-    name: vagrant
+    name: root
     shell: /usr/bin/zsh
   become: yes
