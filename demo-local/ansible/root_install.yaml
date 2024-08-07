@@ -1,0 +1,34 @@
+---
+- name: tweak apt 1/2
+  # ansible.builtin.command: echo 'APT::Get::Show-Versions "true";' > /etc/apt/apt.conf.d/99show-versions
+  ansible.builtin.file:
+    path: /etc/apt/apt.conf.d/99show-versions
+    state: touch
+    mode: '0644'
+
+- name: tweak apt 2/2
+  ansible.builtin.lineinfile:
+    dest: /etc/apt/apt.conf.d/99show-versions
+    line: 'APT::Get::Show-Versions "true";'
+    create: yes
+
+
+- name: install packages
+  ansible.builtin.apt:
+    name:
+      - bat
+      - curl
+      - git
+      - grc
+      - nmap
+      - tmux
+      - vim
+      - zsh
+    update_cache: yes
+
+- name: rename bat
+  ansible.builtin.file:
+    src: /usr/bin/batcat
+    dest: /usr/bin/bat
+    state: link
+    force: no

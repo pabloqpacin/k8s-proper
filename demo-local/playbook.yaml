@@ -1,0 +1,12 @@
+---
+- name: master shell - install packages
+  hosts: master
+  become: true
+  tasks:
+    - import_tasks: ansible/root_install.yaml
+- name: master shell - symlink etc
+  hosts: master
+  become: false
+  tasks:
+    - import_tasks: ansible/user_setup.yaml
+

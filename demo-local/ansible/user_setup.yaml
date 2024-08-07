@@ -1,0 +1,43 @@
+
+- name: clone dotfiles
+  ansible.builtin.git:
+    repo: 'https://github.com/pabloqpacin/dotfiles.git'
+    dest: ~/dotfiles
+
+# - name: rename old .vimrc
+#   ansible.builtin.copy: remote_src=True src=~/.vimrc dest=~/.vimrc.bak
+#   ansible.builtin.file: path=~/.vimrc state=absent
+
+- name: rename old .vimrc and create symlink
+  ansible.builtin.shell: |
+    if [ -f ~/.vimrc ]; then mv ~/.vimrc{,.bak}; fi
+    ln -s ~/dotfiles/.vimrc ~/.vimrc
+  args:
+    executable: /bin/bash
+
+# - name: symlink .vimrc
+#   ansible.builtin.file:
+#     src: ~/dotfiles/.vimrc
+#     dest: ~/.vimrc
+#     state: link
+#     force: no
+
+- name: ensure .config directory exists
+  ansible.builtin.file:
+    path: ~/.config
+    state: directory
+    mode: '0755'
+
+- name: symlink bat
+  ansible.builtin.file:
+    src: ~/dotfiles/.config/bat
+    dest: ~/.config/bat
+    state: link
+    force: no
+
+- name: symlink tmux
+  ansible.builtin.file:
+    src: ~/dotfiles/.config/tmux
+    dest: ~/.config/tmux
+    state: link
+    force: no

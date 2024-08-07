@@ -1,1 +1,4 @@
 .vagrant
+
+ansible.cfg
+setup/
