@@ -4,23 +4,14 @@
     repo: 'https://github.com/pabloqpacin/dotfiles.git'
     dest: ~/dotfiles
 
-# - name: rename old .vimrc
-#   ansible.builtin.copy: remote_src=True src=~/.vimrc dest=~/.vimrc.bak
-#   ansible.builtin.file: path=~/.vimrc state=absent
-
 - name: rename old .vimrc and create symlink
   ansible.builtin.shell: |
-    if [ -f ~/.vimrc ]; then mv ~/.vimrc{,.bak}; fi
-    ln -s ~/dotfiles/.vimrc ~/.vimrc
+    if [ ! -L ~/.vimrc ]; then
+      mv ~/.vimrc{,.bak}
+      ln -s ~/dotfiles/.vimrc ~/.vimrc
+    fi
   args:
     executable: /bin/bash
-
-# - name: symlink .vimrc
-#   ansible.builtin.file:
-#     src: ~/dotfiles/.vimrc
-#     dest: ~/.vimrc
-#     state: link
-#     force: no
 
 - name: ensure .config directory exists
   ansible.builtin.file:
@@ -41,3 +32,45 @@
     dest: ~/.config/tmux
     state: link
     force: no
+
+- name: Download and install Oh My Zsh
+  ansible.builtin.shell: |
+    if [ ! -d ~/.oh-my-zsh ]; then
+      yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
+  args:
+    executable: /bin/bash
+  environment:
+    ZSH: "{{ ansible_env.HOME }}/.oh-my-zsh"
+    RUNZSH: "no"
+    KEEP_ZSHRC: "yes"
+
+- name: Backup existing .zshrc if it exists
+  ansible.builtin.shell: |
+    if [ ! -L ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.bak; fi
+  args:
+    executable: /bin/bash
+
+- name: Create symlink for .zshrc
+  ansible.builtin.file:
+    src: ~/dotfiles/.zshrc
+    dest: ~/.zshrc
+    state: link
+
+- name: Execute setup scripts
+  ansible.builtin.shell: |
+    {% for script in scripts %}
+    bash {{ script }}
+    {% endfor %}
+  args:
+    executable: /bin/bash
+  vars:
+    scripts:
+      - ~/dotfiles/zsh/plugins/clone-em.sh
+      - ~/dotfiles/scripts/setup/omz-msg_random_theme.sh
+
+- name: Ensure zsh is the default shell
+  ansible.builtin.user:
+    name: vagrant
+    shell: /usr/bin/zsh
+  become: yes

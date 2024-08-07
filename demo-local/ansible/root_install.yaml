@@ -24,6 +24,7 @@
       - tmux
       - vim
       - zsh
+    state: present
     update_cache: yes
 
 - name: rename bat
