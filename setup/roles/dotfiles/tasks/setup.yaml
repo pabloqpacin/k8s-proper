@@ -3,6 +3,7 @@
   ansible.builtin.git:
     repo: 'https://github.com/pabloqpacin/dotfiles.git'
     dest: /root/dotfiles
+    version: devel
 
 - name: rename old .vimrc and create symlink
   ansible.builtin.shell: |
@@ -23,6 +24,13 @@
   ansible.builtin.file:
     src: /root/dotfiles/.config/bat
     dest: /root/.config/bat
+    state: link
+    force: no
+
+- name: symlink lf
+  ansible.builtin.file:
+    src: /root/dotfiles/.config/lf
+    dest: /root/.config/lf
     state: link
     force: no
 
@@ -57,7 +65,7 @@
     dest: /root/.zshrc
     state: link
 
-- name: Execute setup scripts
+- name: Execute zsh setup scripts
   ansible.builtin.shell: |
     {% for script in scripts %}
     bash {{ script }}
@@ -73,4 +81,4 @@
   ansible.builtin.user:
     name: root
     shell: /usr/bin/zsh
-  become: yes
+  become: true
