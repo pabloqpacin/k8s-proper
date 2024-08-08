@@ -1,4 +1,5 @@
 .vagrant
 
-ansible.cfg
-setup/
+*/*/roles/dotfiles/
+# ansible.cfg
+# setup/
