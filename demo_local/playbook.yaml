@@ -10,3 +10,11 @@
   tasks:
     - import_tasks: ansible/user_setup.yaml
 
+- name: all vms - kubernetes
+  hosts: remote
+  become: true
+  roles:
+    - kubernetes
+  handlers:
+    - name: docker status
+      service: name=docker state=started
