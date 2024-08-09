@@ -1,0 +1,34 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+cluster = {
+  "host01" => { :ip => "10.0.0.248", :cpus => 2, :mem => 4096 },
+  "host02" => { :ip => "10.0.0.247", :cpus => 2, :mem => 2048 },
+  "host03" => { :ip => "10.0.0.4", :cpus => 2, :mem => 2048 }
+}
+groups = {
+  "remote" => ["host01","host02","host03"],
+  "master" => ["host01"],
+  "workers" => ["host02","host03"]
+}
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "generic/debian12"
+    cluster.each do |name, data|
+      config.vm.define name do |host|
+        host.vm.hostname = name
+        host.vm.network "private_network", ip: "#{data[:ip]}"
+        # host.vm.network "public_network", ip: "#{data[:ip]}", type: "dhcp"
+        # host.vm.network "public_network", ip: "#{data[:ip]}", name: "vagrant_nat_net", auto_config: false
+        host.vm.provider :virtualbox do |vb, override|
+          vb.cpus = data[:cpus]
+          vb.memory = data[:mem]
+          # vb.customize ["modifyvm", :id, "--natnet1", "10.0.0.0/24"]
+        end
+      end
+    end
+    config.vm.provision "ansible" do |ansible|
+      ansible.compatibility_mode = "2.0"
+      ansible.playbook = "playbook.yaml"
+      ansible.groups = groups
+    end
+  end

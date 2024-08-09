@@ -1,0 +1,32 @@
+---
+- name: master - dotfiles
+  hosts: master
+  become: true
+  roles:
+    - dotfiles
+
+# - name: all vms - kubernetes
+#   hosts: remote
+#   become: true
+#   roles:
+#     - kubernetes
+#   handlers:
+#     - name: docker status
+#       service: name=docker state=started
+
+- name: all vms - kubernetes script
+  hosts: remote
+  become: true
+  tasks:
+    - name: files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /opt/{{ item }}
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - k8s-jotelulu.sh
+
+# - name: master - kubeadm init
+# - name: master - kubeadm join
