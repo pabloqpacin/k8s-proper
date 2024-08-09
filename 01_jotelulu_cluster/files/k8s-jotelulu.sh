@@ -32,9 +32,9 @@ sysctl --system
 
     cat<<EOF | tee -a /etc/hosts
 
-10.0.0.248: host01
-10.0.0.247: host02
-10.0.0.4: host03
+10.0.0.248  host01
+10.0.0.247  host02
+10.0.0.4    host03
 EOF
 
 }

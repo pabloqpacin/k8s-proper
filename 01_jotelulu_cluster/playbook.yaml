@@ -5,15 +5,6 @@
   roles:
     - dotfiles
 
-# - name: all vms - kubernetes
-#   hosts: remote
-#   become: true
-#   roles:
-#     - kubernetes
-#   handlers:
-#     - name: docker status
-#       service: name=docker state=started
-
 - name: all vms - kubernetes script
   hosts: remote
   become: true

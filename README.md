@@ -29,7 +29,13 @@
 
 ## 01_jotelulu_cluster
 
-- Iniciamos el cluster. Cuando las máquinas estén creadas, hacemos un snapshot para restaurar por si acaso.
+- Lo primero es cambiar la configuración de red de virtualbox en el anfitrión si es Linux
+
+```bash
+bash scripts/host_vbox_network.sh
+```
+
+- Iniciamos el cluster. ~~Cuando las máquinas estén creadas~~ Tras ejecutar los scripts, hacemos un snapshot para restaurar por si acaso.
 
 ```bash
 cd 01_jotelulu_cluster
@@ -37,7 +43,7 @@ cd 01_jotelulu_cluster
 vagrant up
 
 vagrant snapshot list
-vagrant snapshot push
+# vagrant snapshot push
 
 # vagrant snapshot pop
 ```
@@ -56,8 +62,8 @@ vagrant ssh host01
 }
 ```
 ```log
-    kubeadm join 10.0.0.248:6443 --token 32j5cj.tnic5sjqz9n65m1d \
-            --discovery-token-ca-cert-hash sha256:540a6338a2282f8e3439a83914157b4ba8b87a8c0a9b761594c4d748d3af6acf
+kubeadm join 10.0.0.248:6443 --token gukd69.h25y9i8r1xja681h \
+        --discovery-token-ca-cert-hash sha256:66d0e19bef12dda7eaadef4e1c7b43713b0167f131e1bec8c479b61d23a46d08
 ```
 
 
@@ -77,6 +83,18 @@ vagrant ssh host03
     bash /opt/k8s-jotelulu.sh
     # INTRODUCIMOS EL TOKEN
 }
+```
+
+- Detenemos las vms y ~~renovamos~~ creamos snapshots. Cuando queramos restaurarlas, pasamos la flag `--no-delete` para mantener la snapshot (ya que este es un estado ideal, cluster limpico... *y totalmente operativo sin conflictos de red ni nada...*)
+
+```bash
+vagrant halt
+
+vagrant snapshot push
+vagrant snapshot list
+
+# vagrant halt && \
+# vagrant snapshot pop --no-delete
 ```
 
 <!-- 
