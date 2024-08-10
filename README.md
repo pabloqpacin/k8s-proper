@@ -1,39 +1,43 @@
 # k8s-proper
 
 - [k8s-proper](#k8s-proper)
-  - [repo](#repo)
-  - [todo](#todo)
+  - [about](#about)
+    - [repo](#repo)
+    - [todo](#todo)
   - [01\_jotelulu\_cluster](#01_jotelulu_cluster)
   - [02\_cluster\_nfs](#02_cluster_nfs)
-    - [prueba\_webapp.sh](#prueba_webappsh)
-    - [wordpress-mysql\_pv-pvc-cm-svc-deploy.yaml](#wordpress-mysql_pv-pvc-cm-svc-deployyaml)
-    - [restauración](#restauración)
-  - [03\_helm\_bs](#03_helm_bs)
+    - [Levantar entorno](#levantar-entorno)
+    - [Crear cluster Kubernetes](#crear-cluster-kubernetes)
+    - [Habilitar dashboards](#habilitar-dashboards)
+    - [Demos](#demos)
+      - [prueba\_webapp.sh](#prueba_webappsh)
+      - [wordpress-mysql\_pv-pvc-cm-svc-deploy.yaml](#wordpress-mysql_pv-pvc-cm-svc-deployyaml)
+      - [restauración](#restauración)
+  - [03\_private\_registry](#03_private_registry)
 
 
-## repo
+## about
+
+### repo
 
 | setup                 | ok    | info
 | ---                   | ---   | ---
 | 01_jotelulu_cluster   | YES   | 3 vms + k8s script
-| 02_cluster_nfs        | YES   | 4 vms + ansible NFS + k8s script
+| 02_cluster_nfs        | YES   | 4 vms + ansible NFS + k8s script + Helm dashboards
+| 03_private_registry   | 
 |                       | 
 
 
-## todo
+### todo
 
 <!-- - [ ] **02_rancher_cluster**: troubleshoot: try kubelet's `--node-ip` -->
 
-- [ ] HELM: dashboard + rancher
-- [ ] HELM: mywebapp
-- [ ] HELM: wordpress_nfs
-
-- [ ] dashboard
 - [ ] private registry
-- [ ] Rancher
+- [ ] Rancher (Helm, ...)
+- [x] Helm: Helm Dashboard + Kubernetes Dashboard
+- [ ] Helm apps: mywebapp, wordpress_nfs
 - [x] NFS
   - [x] wordpress bs
-
 - STUDY
   - [ ] ingress ([src](https://www.youtube.com/watch?v=SUk_Nm5BiPw))
 
@@ -41,6 +45,9 @@
 ---
 
 ## 01_jotelulu_cluster
+
+<details>
+<summary>Mejor el 02 directamente!</summary>
 
 - Lo primero es cambiar la configuración de red de virtualbox en el anfitrión si es Linux
 
@@ -144,14 +151,103 @@ replicaset.apps/coredns-76f75df574   2         2         2       50m   coredns  
 ```
 -->
 
+</details>
+
 
 ---
 
+<!-- ## 02_cluster_nfs_helm_dashboards -->
 ## 02_cluster_nfs
 
-> DEMOS
+### Levantar entorno
 
-### prueba_webapp.sh
+- Config virtualbox en anfitrión Linux
+
+```bash
+bash scripts/host_vbox_network.sh
+```
+
+- Levantar vms con Vagrant
+
+```bash
+cd 02_cluster_nfs
+vagrant up
+```
+
+### Crear cluster Kubernetes
+
+- Nos conectamos a cada nodo para ejecutar el script que instalará los componentes de kubernetes <!--(TODO: Ansible)-->; importante no perder el token de `kubeadm`
+
+```bash
+vagrant ssh host01
+{
+    sudo -i
+    bash /opt/k8s-jotelulu.sh
+    # Copiamos el token a otro doc o abrimos otra pane en tmux. NO PERDER EL TOKEN.
+
+    watch kubectl get all --all-namespaces
+    watch kubectl get nodes -o wide
+}
+```
+
+```log
+kubeadm join 10.0.0.248:6443 --token 3oliin.jmfnmtkvyn6dydl3 \
+        --discovery-token-ca-cert-hash sha256:32e92228a7b899d7a30c005ecff12c34764ac876ebe351d7be63ce69fb86a92c
+```
+
+```bash
+vagrant ssh host02
+{
+    sudo -i
+    bash /opt/k8s-jotelulu.sh
+    # INTRODUCIMOS EL TOKEN
+    exit
+}
+
+vagrant ssh host03
+{
+    sudo -i
+    bash /opt/k8s-jotelulu.sh
+    # INTRODUCIMOS EL TOKEN
+    exit
+}
+```
+
+- Con el cluster a punto, podemos detener las vms y hacer una *snapshot*
+
+```bash
+vagrant halt
+
+vagrant snapshot push
+vagrant snapshot list
+
+# vagrant snapshot pop --no-delete --provision
+
+vagrant up
+```
+
+### Habilitar dashboards
+
+- Nos conectamos al *controlplane* para instalar la movida y crear un servicio que disponibilice los dashboards en caso de reinicios
+
+```bash
+vssh host01
+{
+    bash /opt/helm_dashboards.sh
+    cat ~/bearer_token
+}
+```
+
+- Consultamos los dashboards desde el anfitrión
+
+```bash
+xdg-open http://10.0.0.48:8080
+xdg-open http://10.0.0.48:8443      # + bearer_token
+```
+
+### Demos
+
+#### prueba_webapp.sh
 
 ```bash
 vagrant ssh host01
@@ -169,11 +265,14 @@ vagrant ssh host01
 xdg-open http://10.0.0.248:${WEBAPP_PORT}
 ```
 
-### wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
+#### wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
 
+<!-- 
 - [ ] Helm chart
+- [ ] tweak port
 - [ ] namespace?
 - [ ] version updates?
+ -->
 
 ```bash
 vagrant ssh hostnfs
@@ -202,17 +301,26 @@ xdg-open http://10.0.0.248:${WP_PORT}
 ```
 
 
-### restauración
+#### restauración
 
-- Con las pruebas terminadas, corremos `vagrant snapshot pop --no-delete` para restaurar las vms o `vagrant destroy` del tirón para pasar al siguiente apartado.
+- Con las pruebas terminadas, corremos `vagrant snapshot pop --no-delete` para restaurar las vms o `vagrant destroy` del tirón para pasar al siguiente apartado. Si por lo que sea restauramos, lo ideal es correr `watch kubectl get pods --all-namespaces` antes de operar para evitar problemas.
 
+```bash
+vagrant halt && \
+vagrant snapshot pop --no-delete
+
+# Verificar cluster operativo antes de nuevas operaciones
+vagrant ssh host01
+{
+  watch kubectl get pods --all-namespaces
+}
+```
 
 
 ---
 
 
-## 03_helm_bs
+## 03_private_registry
 
-<!-- - lo de wordpress, que sea un helm chart -->
-
+---
 

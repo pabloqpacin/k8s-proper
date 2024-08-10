@@ -1,22 +1,4 @@
 ---
-- name: master - dotfiles
-  hosts: master
-  become: true
-  roles:
-    - dotfiles
-  tasks:
-    - name: files
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: /opt/{{ item }}
-        owner: root
-        group: root
-        mode: '0644'
-      loop:
-        - helm_dashboards.sh
-        - prueba_webapp.sh
-        - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
-
 - name: nfs vm - setup nfs
   hosts: hostnfs
   become: true
@@ -38,6 +20,24 @@
         mode: '0644'
       loop:
         - k8s-jotelulu.sh
+
+- name: master - dotfiles
+  hosts: master
+  become: true
+  roles:
+    - dotfiles
+  tasks:
+    - name: files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /opt/{{ item }}
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - helm_dashboards.sh
+        - prueba_webapp.sh
+        - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
 
 # - name: master - kubeadm init
 # - name: master - kubeadm join
