@@ -1,0 +1,28 @@
+---
+- name: Install the NFS package
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: yes
+
+- name: Setup NFS for Wordpress BS
+  ansible.builtin.shell: |
+    if [[ ! -d /var/datos && $(! grep -q '/var/datos' /etc/exports; echo $?) ]]; then
+        mkdir -p /var/datos/{wordpress,mysql}
+        chmod o+rwx /var/datos
+        {
+          echo '/var/datos/wordpress *(rw,sync,no_root_squash,no_all_squash)'
+          echo '/var/datos/mysql *(rw,sync,no_root_squash,no_all_squash)'
+        } | tee -a /etc/exports
+        systemctl restart nfs-kernel-server
+    else
+        echo 'Existing NFS config detected. Not applying changes'
+    fi
+    showmount -e
+  args:
+    executable: /bin/bash
+
+
+#     if [[ ! -d /var/datos && $(! grep -q '/var/datos' /etc/exports; echo $?) ]]; then
+
+    # if [[ ! -d /var/datos ]]; then

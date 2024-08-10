@@ -1,0 +1,17 @@
+---
+- name: Install NFS for the clients
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: yes
+
+- name: Setup NFS for Wordpress BS
+  ansible.builtin.shell: |
+    mkdir -p /var/datos/wordpress && mount -t nfs hostnfs:/var/datos/wordpress /var/datos/wordpress
+    mkdir -p /var/datos/mysql && mount -t nfs hostnfs:/var/datos/mysql /var/datos/mysql
+    # df -h
+  args:
+    executable: /bin/bash
+
+
+# OJO: lo de 'host_nfs' no será aplicable hasta que se ejecute el script post-ansible
