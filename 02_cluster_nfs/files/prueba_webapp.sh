@@ -55,7 +55,7 @@ sleep 20 && \
     kubectl get rs &&
     kubectl get svc
 
-sleep 10 && \
+sleep 20 && \
 curl localhost:30002
 
 # xdg-open http://10.0.0.248:30002/

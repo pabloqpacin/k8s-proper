@@ -13,6 +13,7 @@
         group: root
         mode: '0644'
       loop:
+        - helm_dashboards.sh
         - prueba_webapp.sh
         - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
 
