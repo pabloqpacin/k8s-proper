@@ -14,6 +14,7 @@
         mode: '0644'
       loop:
         - prueba_webapp.sh
+        - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
 
 - name: nfs vm - setup nfs
   hosts: hostnfs
