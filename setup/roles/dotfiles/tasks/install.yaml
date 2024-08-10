@@ -25,6 +25,7 @@
       - nmap
       - tmux
       - vim
+      - tree
       - zsh
     state: present
     update_cache: yes

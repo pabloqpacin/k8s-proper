@@ -4,6 +4,11 @@
   - [repo](#repo)
   - [todo](#todo)
   - [01\_jotelulu\_cluster](#01_jotelulu_cluster)
+  - [02\_cluster\_nfs](#02_cluster_nfs)
+    - [prueba\_webapp.sh](#prueba_webappsh)
+    - [wordpress-mysql\_pv-pvc-cm-svc-deploy.yaml](#wordpress-mysql_pv-pvc-cm-svc-deployyaml)
+    - [restauración](#restauración)
+  - [03\_helm\_bs](#03_helm_bs)
 
 
 ## repo
@@ -11,6 +16,7 @@
 | setup                 | ok    | info
 | ---                   | ---   | ---
 | 01_jotelulu_cluster   | YES   | 3 vms + k8s script
+| 02_cluster_nfs        | YES   | 4 vms + ansible NFS + k8s script
 |                       | 
 
 
@@ -18,11 +24,18 @@
 
 <!-- - [ ] **02_rancher_cluster**: troubleshoot: try kubelet's `--node-ip` -->
 
+- [ ] HELM: dashboard + rancher
+- [ ] HELM: mywebapp
+- [ ] HELM: wordpress_nfs
+
 - [ ] dashboard
-- [ ] wordpress bs
 - [ ] private registry
 - [ ] Rancher
-- [ ] NFS
+- [x] NFS
+  - [x] wordpress bs
+
+- STUDY
+  - [ ] ingress ([src](https://www.youtube.com/watch?v=SUk_Nm5BiPw))
 
 
 ---
@@ -67,7 +80,7 @@ kubeadm join 10.0.0.248:6443 --token gukd69.h25y9i8r1xja681h \
 ```
 
 
-- Nos conectamos al segundo y tercer nodo, ejecutamos el script y cuando termine introducimos el token que se generó previamente.
+- Nos conectamos al segundo y tercer nodo, ejecutamos el script y cuando termine introducimos el token que se generó previamente. No perdemos de vista los comandos `watch` en el `host01`.
 
 ```bash
 vagrant ssh host02
@@ -131,5 +144,75 @@ replicaset.apps/coredns-76f75df574   2         2         2       50m   coredns  
 ```
 -->
 
+
+---
+
+## 02_cluster_nfs
+
+> DEMOS
+
+### prueba_webapp.sh
+
+```bash
+vagrant ssh host01
+{
+  sudo -i
+  bash /opt/prueba_webapp.sh
+
+  # kubectl get svc web-svc
+  WEBAPP_PORT=$(kubectl get svc web-svc -o jsonpath='{.spec.ports[0].nodePort}')
+
+  # kubectl delete -f ~/k8s/sondas/sonda-http.yaml
+}
+
+# xdg-open http://10.0.0.248:30002
+xdg-open http://10.0.0.248:${WEBAPP_PORT}
+```
+
+### wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
+
+- [ ] Helm chart
+- [ ] namespace?
+- [ ] version updates?
+
+```bash
+vagrant ssh hostnfs
+{
+  sudo -i
+  watch tree /var/datos
+}
+
+vagrant ssh host01
+{
+  sudo -i
+  # sed -i 's/wordpress:4.8-apache/wordpress:6.2-apache/' /opt/word*.yaml
+  # sed -i 's/mysql:5.6/mysql:8.0/' /opt/word*.yaml
+
+  kubectl apply -f /opt/wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
+  watch kubectl get all
+
+  # kubectl get svc wordpress
+  WP_PORT=$(kubectl get svc wordpress -o jsonpath='{.spec.ports[0].nodePort}')
+}
+
+# xdg-open http://10.0.0.248:31636
+xdg-open http://10.0.0.248:${WP_PORT}
+  # Wordpress web GUI installation wizard
+  # site==foo, name==bar, pass==ORnFH7IMEkDa$6AB4Z, email==foo@bar.com
+```
+
+
+### restauración
+
+- Con las pruebas terminadas, corremos `vagrant snapshot pop --no-delete` para restaurar las vms o `vagrant destroy` del tirón para pasar al siguiente apartado.
+
+
+
+---
+
+
+## 03_helm_bs
+
+<!-- - lo de wordpress, que sea un helm chart -->
 
 
