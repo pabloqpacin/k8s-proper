@@ -7,8 +7,14 @@
 
 - name: Setup NFS for Wordpress BS
   ansible.builtin.shell: |
-    mkdir -p /var/datos/wordpress && mount -t nfs hostnfs:/var/datos/wordpress /var/datos/wordpress
-    mkdir -p /var/datos/mysql && mount -t nfs hostnfs:/var/datos/mysql /var/datos/mysql
+    if [ ! -d /opt/registry ]; then
+      mkdir -p /opt/{certs,registry}
+      {
+        echo "hostnfs:/opt/certs    /opt/certs    nfs defaults 0 0"
+        echo "hostnfs:/opt/registry /opt/registry nfs defaults 0 0"
+      } | tee -a /etc/fstab
+      mount -a
+    fi
     # df -h
   args:
     executable: /bin/bash

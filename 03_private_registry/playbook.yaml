@@ -38,7 +38,7 @@
       loop:
         - helm_dashboards.sh
         - prueba_webapp.sh
-        - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
+        # - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
 
 # - name: master - kubeadm init
 # - name: master - kubeadm join
