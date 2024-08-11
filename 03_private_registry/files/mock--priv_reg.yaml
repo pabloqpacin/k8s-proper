@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-registry
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: private-registry
+  nfs:
+    path: /opt/registry
+    server: hostnfs
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-certs
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: private-registry
+  nfs:
+    path: /opt/certs
+    server: hostnfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-registry
+spec:
+  storageClassName: private-registry
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-certs
+spec:
+  storageClassName: private-registry
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datos-registry-env
+  namespace: default
+data:
+  REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/registry.crt"
+  REGISTRY_HTTP_TLS_KEY: "/certs/registry.key"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: private-registry
+  labels:
+    app: private-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: private-registry
+  strategy:
+    type: Recreate      # VS RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: private-registry
+    spec:
+      containers:
+      - image: registry:2
+        name: private-registry
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: datos-registry-env
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: certs-vol
+          mountPath: /certs
+        - name: registry-vol
+          mountPath: /var/lib/registry
+      volumes:
+      - name: registry-vol
+        persistentVolumeClaim:
+          claimName: pvc-registry
+      - name: certs-vol
+        persistentVolumeClaim:
+          claimName: pvc-certs
+
+
+# Deployment: Uses the PVC for the /var/lib/registry mount, which is where your registry data will be stored. The certs-vol still uses hostPath since it's specific to the host's certificates.
