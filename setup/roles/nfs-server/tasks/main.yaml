@@ -7,12 +7,13 @@
 
 - name: Setup NFS for Wordpress BS
   ansible.builtin.shell: |
-    if [[ ! -d /var/datos && $(! grep -q '/var/datos' /etc/exports; echo $?) ]]; then
-        mkdir -p /var/datos/{wordpress,mysql}
-        chmod o+rwx /var/datos
+    if [[ ! -d /opt/registry && $(! grep -q '/opt/registry' /etc/exports; echo $?) ]]; then
+        mkdir -p /opt/{certs,registry}
+        chmod o+rwx /opt/certs /opt/registry
+        chown -R nobody: /opt/certs /opt/registry
         {
-          echo '/var/datos/wordpress *(rw,sync,no_root_squash,no_all_squash)'
-          echo '/var/datos/mysql *(rw,sync,no_root_squash,no_all_squash)'
+          echo '/opt/certs    *(rw,sync,no_root_squash,no_all_squash)'
+          echo '/opt/registry *(rw,sync,no_root_squash,no_all_squash)'
         } | tee -a /etc/exports
         systemctl restart nfs-kernel-server
     else

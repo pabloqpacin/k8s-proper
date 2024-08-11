@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+cluster = {
+  # "hostrancher" => { :ip => "10.0.0.69", :cpus => 2, :mem => 4096 },
+  "hostnfs" => { :ip => "10.0.0.201", :cpus => 2, :mem => 2048 },
+  "host01" => { :ip => "10.0.0.248", :cpus => 2, :mem => 4096 },
+  "host02" => { :ip => "10.0.0.247", :cpus => 2, :mem => 2048 },
+  "host03" => { :ip => "10.0.0.4", :cpus => 2, :mem => 2048 }
+}
+groups = {
+  "remote" => ["host01","host02","host03","hostrancher","hostnfs"],
+  # "rancher" => ["hostrancher"],
+  "nfs" => ["hostnfs"],
+  "cluster" => ["host01","host02","host03"],
+  "master" => ["host01"],
+  "workers" => ["host02","host03"]
+}
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "generic/debian12"
+    cluster.each do |name, data|
+      config.vm.define name do |host|
+        host.vm.hostname = name
+        host.vm.network "private_network", ip: "#{data[:ip]}"
+        host.vm.provider :virtualbox do |vb, override|
+          vb.cpus = data[:cpus]
+          vb.memory = data[:mem]
+        end
+      end
+    end
+    config.vm.provision "shell", inline: <<-SHELL
+    if ! grep -qs '10.0.0' /etc/hosts; then
+      {
+        echo -e '\n10.0.0.201  hostnfs'
+        echo '10.0.0.248  host01'
+        echo '10.0.0.247  host02'
+        echo '10.0.0.4    host03'
+      } | sudo tee -a /etc/hosts
+    fi
+    SHELL
+    config.vm.provision "ansible" do |ansible|
+      ansible.compatibility_mode = "2.0"
+      ansible.playbook = "playbook.yaml"
+      ansible.groups = groups
+    end
+  end

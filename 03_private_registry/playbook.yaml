@@ -1,0 +1,54 @@
+---
+- name: nfs vm - setup nfs
+  hosts: hostnfs
+  become: true
+  roles:
+    - nfs-server
+
+- name: cluster vms - nfs client & kubernetes script & webapp deploy
+  hosts: cluster
+  become: true
+  roles:
+    - nfs-client
+    # - ssh
+  tasks:
+    - name: files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /opt/{{ item }}
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - k8s-jotelulu.sh
+
+- name: master - dotfiles
+  hosts: master
+  become: true
+  roles:
+    - dotfiles
+  tasks:
+    - name: files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /opt/{{ item }}
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - helm_dashboards.sh
+        - prueba_webapp.sh
+        # - wordpress-mysql_pv-pvc-cm-svc-deploy.yaml
+
+# - name: master - kubeadm init
+# - name: master - kubeadm join
+
+
+# - name: rancher vm - install docker for Rancher
+#   hosts: hostrancher
+#   become: true
+#   roles:
+#     - kubernetes
+#   handlers:
+#     - name: docker status
+#       service: name=docker state=started
