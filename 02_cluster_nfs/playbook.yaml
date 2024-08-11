@@ -10,6 +10,7 @@
   become: true
   roles:
     - nfs-client
+    # - ssh
   tasks:
     - name: files
       ansible.builtin.copy:

@@ -9,3 +9,5 @@ if [ ! -d /etc/vbox ]; then sudo mkdir /etc/vbox; fi
 sudo tee /etc/vbox/networks.conf << EOF
 * 0.0.0.0/0 ::/0
 EOF
+
+# https://stackoverflow.com/questions/25758737/vagrant-login-as-root-by-default

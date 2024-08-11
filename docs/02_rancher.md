@@ -18,10 +18,10 @@ docker run --name rancher --privileged -d --restart=unless-stopped -p 80:80 -p 4
 docker logs -f rancher 2>&1 | grep "Bootstrap Password:"
 ```
 
-- En el anfitrión, abrimos un navegador web y visitamos nuestra VM (https://192.168.61.248). Nos dirá que es inseguro, le damos a continuar igualmente.
+- En el anfitrión, abrimos un navegador web y visitamos nuestra VM (https://10.0.0.69). Nos dirá que es inseguro, le damos a continuar igualmente.
   - Introducimos la contraseña que nos devuelve el comando `docker logs` anterior.
-  - Guardamos en KeePassXC la nueva contraseña autogenerada que se nos presenta (`00z1qCbZeIKyrmoa`) para el usuario `admin`.
-  - Definimos que la URL del Server sea: `https://192.168.61.69`.
+  - Guardamos en KeePassXC la nueva contraseña autogenerada que se nos presenta (`g0pxRqUV4pV5BnIB`) para el usuario `admin`.
+  - Definimos que la URL del Server sea: `https://10.0.0.69`.
   - Deshabilitamos la telemetría y confirmamos el EULA y los T&C.
 
 
@@ -93,6 +93,8 @@ Labels & Annotations:
 #     Use the same path for System-agent, Provisioning and K8s Distro data directories configuration: true
 #     Dat adirectory configuration path: -
 #   Addtional Kubelet Args: -
+  # Addtional Kubelet Args:
+  #   KUBELET_EXTRA_ARGS=--node-ip=$(ip --json a s | jq -r '.[] | if .ifname == "eth1" then .addr_info[] | if .family == "inet" then .local else empty end else empty end')
 #   Addtional Controller Manager Args: -
 #   Addtional API Server Args: -
 #   Addtional Scheduler Args: -
@@ -637,6 +639,16 @@ __clone: true
 ```
 
 </details>
+
+---
+
+```bash
+# host01
+curl --insecure -fL https://10.0.0.69/system-agent-install.sh | sudo  sh -s - --server https://10.0.0.69 --label 'cattle.io/os=linux' --token knbz8ts4th4hblrfrc8lgx7dcs7dlwqdcdqrhspsg6gnl22fps7jxn --ca-checksum 29c32ded54782dc6309466db5f70990bb5c8f3e0f9ae91a1c8be693bbb6beaca --etcd --controlplane --worker
+
+# ...
+# fail again ffs
+```
 
 ---
 

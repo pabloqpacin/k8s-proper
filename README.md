@@ -23,10 +23,11 @@
 | setup                 | ok    | info
 | ---                   | ---   | ---
 | 01_jotelulu_cluster   | YES   | 3 vms + k8s script
-| 02_cluster_nfs        | YES   | 4 vms + ansible NFS + k8s script + Helm dashboards
+| 02_cluster_nfs*       | YES   | 4 vms + ansible NFS + k8s script + Helm dashboards
 | 03_private_registry   | 
 |                       | 
 
+(*) Demo `nfs_wordpress` solo funciona en rama [legacy/nfs_wordpress](https://github.com/pabloqpacin/k8s-proper/tree/legacy/nfs_wordpress) por la configuración de NFS en `setup/` 
 
 ### todo
 
