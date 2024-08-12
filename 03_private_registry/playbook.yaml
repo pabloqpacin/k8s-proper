@@ -43,10 +43,6 @@
         owner: root
         group: root
         mode: '0644'
-      # loop:
-      #   - nexus-deployment.yaml
-      #   - custom-nexus-deployment.yaml
-      #   - chatgpt-nexus-deployment.yaml
 
 # - name: master - kubeadm init
 # - name: master - kubeadm join
