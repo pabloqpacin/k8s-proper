@@ -1,0 +1,152 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitops
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nexus
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    path: /nexus-data
+    server: hostnfs
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nexus
+  namespace: gitops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-deployment
+  namespace: gitops
+  labels:
+    app: nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: nexus
+        image: sonatype/nexus3:3.68.1-java11
+        ports:
+        - containerPort: 8081
+        - containerPort: 8082
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        volumeMounts:
+        - name: nexus-data
+          mountPath: /nexus-data
+      - name: sidecar
+        image: nginx:1.27-alpine3.19-perl
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "nginx -s quit"]
+        command:
+            - /bin/sh
+            - -c
+            - |
+              export DOMAIN1="nexus.pabloqpacin.com"
+              export DOMAIN2="repo.pabloqpacin.com"
+
+              timeout=60
+              while ! ping -4 -c 1 "$DOMAIN1" > /dev/null && [ $timeout -gt 0 ]; do
+                echo "Waiting for DNS resolution of $DOMAIN1..."
+                sleep 5
+                timeout=$((timeout-5))
+              done
+
+              if [ $timeout -le 0 ]; then
+                echo "DNS resolution for $DOMAIN1 failed; exiting."
+                exit 1
+              fi
+
+              apk add certbot
+
+              certbot certonly \
+                -d "$DOMAIN1","$DOMAIN2" \
+                --noninteractive \
+                --standalone \
+                --agree-tos \
+                --register-unsafely-without-email || true
+
+              echo 'worker_processes  1; events { worker_connections  1024; }' > /etc/nginx/nginx.conf
+              echo 'http { include mime.types; default_type application/octet-stream; sendfile on; keepalive_timeout  65;' >> /etc/nginx/nginx.conf
+              echo 'server { listen 80 default_server; return 301 https://$host$request_uri; }' >> /etc/nginx/nginx.conf
+              echo 'server { listen 443 ssl; server_name '$DOMAIN1'; client_max_body_size 1000M; location / { resolver 127.0.0.1 [::1]:8081 valid=30s; proxy_pass http://127.0.0.1:8081; proxy_redirect off; proxy_set_header Host $host; } ssl_certificate /etc/letsencrypt/live/'$DOMAIN1'/fullchain.pem; ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN1'/privkey.pem; ssl_protocols TLSv1 TLSv1.1 TLSv1.2; ssl_ciphers HIGH:!aNULL:!MD5; }' >> /etc/nginx/nginx.conf
+              echo 'server { listen 443 ssl; server_name '$DOMAIN2'; client_max_body_size 1000M; location / { resolver 127.0.0.1 [::1]:8082 valid=30s; proxy_pass http://127.0.0.1:8082; proxy_redirect off; proxy_set_header Host $host; } ssl_certificate /etc/letsencrypt/live/'$DOMAIN1'/fullchain.pem; ssl_certificate_key /etc/letsencrypt/live/'$DOMAIN1'/privkey.pem; ssl_protocols TLSv1 TLSv1.1 TLSv1.2; ssl_ciphers HIGH:!aNULL:!MD5; }' >> /etc/nginx/nginx.conf
+              echo '}' >> /etc/nginx/nginx.conf
+
+              exec nginx -g 'daemon off;'
+
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: nexus-data
+        persistentVolumeClaim:
+          claimName: pvc-nexus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-service
+  namespace: gitops
+spec:
+  type: NodePort
+  ports:
+  - name: nexus-http
+    port: 80         # Service port
+    targetPort: 8081 # Container port
+    nodePort: 30080  # NodePort (external access)
+  - name: nexus-repository
+    port: 443        # Service port
+    targetPort: 8082 # Container port
+    nodePort: 30443  # NodePort (external access)
+  selector:
+    app: nexus

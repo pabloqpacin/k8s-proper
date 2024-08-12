@@ -36,16 +36,17 @@
         group: root
         mode: '0755'
 
-    - name: Copy files to /nexus
+    - name: Copy k8s manifests to /nexus
       ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: /nexus/{{ item }}
+        src: nexus
+        dest: /
         owner: root
         group: root
         mode: '0644'
-      loop:
-        - nexus-deployment.yaml
-        - custom-nexus-deployment.yaml
+      # loop:
+      #   - nexus-deployment.yaml
+      #   - custom-nexus-deployment.yaml
+      #   - chatgpt-nexus-deployment.yaml
 
 # - name: master - kubeadm init
 # - name: master - kubeadm join
