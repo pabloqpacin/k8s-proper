@@ -5,13 +5,12 @@
     state: present
     update_cache: yes
 
-- name: Setup NFS for Wordpress BS
+- name: Setup NFS clients in k8s
   ansible.builtin.shell: |
-    if [ ! -d /opt/registry ]; then
-      mkdir -p /opt/{certs,registry}
+    if [ ! -d /nexus-data ]; then
+      mkdir -p /nexus-data
       {
-        echo "hostnfs:/opt/certs    /opt/certs    nfs defaults 0 0"
-        echo "hostnfs:/opt/registry /opt/registry nfs defaults 0 0"
+        echo "hostnfs:/nexus-data    /nexus-data    nfs defaults 0 0"
       } | tee -a /etc/fstab
       mount -a
     fi
@@ -19,5 +18,3 @@
   args:
     executable: /bin/bash
 
-
-# OJO: lo de 'host_nfs' no será aplicable hasta que se ejecute el script post-ansible

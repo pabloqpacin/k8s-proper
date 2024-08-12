@@ -5,25 +5,20 @@
     state: present
     update_cache: yes
 
-- name: Setup NFS for Wordpress BS
+- name: Setup NFS for k8s
   ansible.builtin.shell: |
-    if [[ ! -d /opt/registry && $(! grep -q '/opt/registry' /etc/exports; echo $?) ]]; then
-        mkdir -p /opt/{certs,registry}
-        chmod o+rwx /opt/certs /opt/registry
-        chown -R nobody: /opt/certs /opt/registry
+    if [[ ! -d /nexus-data && $(! grep -q '/nexus-data' /etc/exports; echo $?) ]]; then
+        mkdir -p /nexus-data
+        chmod o+rwx /nexus-data
+        chown -R nobody: /nexus-data
         {
-          echo '/opt/certs    *(rw,sync,no_root_squash,no_all_squash)'
-          echo '/opt/registry *(rw,sync,no_root_squash,no_all_squash)'
+          echo '/nexus-data   *(rw,sync,no_root_squash,no_all_squash)'
         } | tee -a /etc/exports
         systemctl restart nfs-kernel-server
     else
         echo 'Existing NFS config detected. Not applying changes'
     fi
-    showmount -e
+    # showmount -e
   args:
     executable: /bin/bash
 
-
-#     if [[ ! -d /var/datos && $(! grep -q '/var/datos' /etc/exports; echo $?) ]]; then
-
-    # if [[ ! -d /var/datos ]]; then
