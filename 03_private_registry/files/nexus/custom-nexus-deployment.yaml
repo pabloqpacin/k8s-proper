@@ -32,6 +32,14 @@ spec:
         ports:
         - containerPort: 8081
         - containerPort: 8082
+        # resources: otherwise OOMKilled 137
+        # resources:
+        #   requests:
+        #     memory: "1Gi"
+        #     cpu: "500m"
+        #   limits:
+        #     memory: "2Gi"
+        #     cpu: "1"
         # readinessProbe:
         #   httpGet:
         #     path: /
@@ -60,22 +68,24 @@ spec:
               export DOMAIN1="nexus1.pabloqpacin.com"
               export DOMAIN2="repo1.pabloqpacin.com"
 
+              apk install curl
+
               # En nuestro caso el dominio resuelve a la IP de JL y mediante LB se conecta con las vms -- ICMP desactivado pero HTTP disponible!!
               # if ! ping -4 -c 1 "$DOMAIN1" > /dev/null; then echo "Dominio no disponible"; sleep infinity; fi
               
-              if ! curl -s "$DOMAIN1" > /dev/null; then echo "Dominio no disponible"; sleep infinity; fi
+              # if ! curl -s "$DOMAIN1" > /dev/null; then echo "Dominio no disponible"; sleep infinity; fi
 
-              # timeout=60
-              # while ! curl -s "$DOMAIN1" > /dev/null && [ $timeout -gt 0 ]; do
-              #   echo "Waiting for DNS resolution of $DOMAIN1..."
-              #   sleep 5
-              #   timeout=$((timeout-5))
-              # done
+              timeout=60
+              while ! curl -s "$DOMAIN1" > /dev/null && [ $timeout -gt 0 ]; do
+                echo "Waiting for DNS resolution of $DOMAIN1..."
+                sleep 5
+                timeout=$((timeout-5))
+              done
 
-              # if [ $timeout -le 0 ]; then
-              #   echo "DNS resolution for $DOMAIN1 failed; exiting."
-              #   exit 1
-              # fi
+              if [ $timeout -le 0 ]; then
+                echo "DNS resolution for $DOMAIN1 failed; exiting."
+                exit 1
+              fi
 
               apk add certbot
 
