@@ -1,0 +1,51 @@
+
+- name: Setup nvm
+  ansible.builtin.shell: |
+    if [ ! -d /root/.oh-my-zsh ]; then
+      yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
+    if [ ! -s "/root/.nvm/nvm.sh" ]; then
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash;
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Setup node
+  ansible.builtin.shell: |
+    if ! command -v node &>/dev/null && ! command -v npm &>/dev/null; then
+        [ -s "/root/.nvm/nvm.sh" ] && \. "/root/.nvm/nvm.sh"
+        nvm install node
+    fi
+  args:
+    executable: /bin/bash
+
+# Gets stuck
+- name: Build neovim
+  ansible.builtin.shell: |
+    if ! command -v nvim &>/dev/null; then
+        apt install -y build-essential cmake gettext ninja-build unzip
+        git clone --depth 1 https://github.com/neovim/neovim.git /tmp/neovim
+        pwd=$(pwd)
+        cd /tmp/neovim && make CMAKE_BUILD_TYPE=Release && \
+            sudo make install && cd $pwd
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Setup packer
+  ansible.builtin.shell: |
+    if [ ! -d /root/.local/share/nvim/site/pack/packer/start/packer.nvim ]; then
+        git clone --depth 1 https://github.com/wbthomason/packer.nvim \
+            /root/.local/share/nvim/site/pack/packer/start/packer.nvim
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Symlink neovim
+  ansible.builtin.file:
+    src: /root/dotfiles/.config/nvim
+    dest: /root/.config/nvim
+    state: link
+    force: no
+
+# queda lo de abrir ./packer.lua y hacer el :so + :PackerSync
