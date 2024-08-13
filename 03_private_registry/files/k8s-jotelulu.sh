@@ -56,7 +56,7 @@ setup_k8s_docker_containerd(){
     sudo apt-mark hold kubelet kubeadm kubectl
     sudo systemctl enable --now kubelet
 
-    apt install -y docker.io
+    apt install -y docker.io docker-compose
 
     if [ ! -d '/etc/containerd' ]; then mkdir /etc/containerd; fi
     sh -c "containerd config default > /etc/containerd/config.toml"

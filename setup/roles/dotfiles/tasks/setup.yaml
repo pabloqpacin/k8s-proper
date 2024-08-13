@@ -1,3 +1,25 @@
+- name: custom .gitconfig
+  ansible.builtin.shell: |
+    if [ ! -e /root/.gitconfig ]; then
+      {
+        echo "[init]"
+        echo "        defaultBranch = main"
+        # echo ""
+        # echo "[core]"
+        # echo "    pager = delta"
+        # echo "[interactive]"
+        # echo "    diffFilter = delta --color-only"
+        # echo "[delta]"
+        # echo "    navigate = true"
+        # echo "    line-numbers = true"
+        # echo "[merge]"
+        # echo "    conflictstyle = diff3"
+        # echo "[diff]"
+        # echo "    colorMoved = default"
+      } | tee /root/.gitconfig
+    fi
+  args:
+    executable: /bin/bash
 
 - name: clone dotfiles
   ansible.builtin.git:
