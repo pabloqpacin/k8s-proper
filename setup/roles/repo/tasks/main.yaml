@@ -1,0 +1,6 @@
+
+- name: Clone repo for k8s manifests
+  ansible.builtin.git:
+    repo: 'https://github.com/pabloqpacin/k8s-proper.git'
+    dest: /root/k8s-proper
+    version: main
